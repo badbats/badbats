@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="height=480, user-scalable=0">
+	<script src="phaser.min.js"></script>
+	<style>
+		body {
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+	<script>
+		var game = new Phaser.Game(320, 480);
+
+		var playState = {
+			preload: function() {
+
+				game.load.image("landscape", "assets/landscape.png");
+				game.load.image("rock", "assets/rock.png");
+				game.load.image("bat", "assets/bat.png");
+				game.load.image("slingshot", "assets/slingshot.png");
+				game.load.image("back", "assets/back.png");
+
+			}, 
+
+			create: function() {
+
+				game.add.sprite(0, 0, "landscape");
+				slingshot = game.add.sprite(160, 370, "slingshot");
+				slingshot.anchor.setTo(0.5);
+				
+				
+
+				dragrock = false;
+
+				graphics = game.add.graphics(0, 0);
+
+				rockGroup = game.add.group();
+				batGroup = game.add.group();
+
+				batTimer = game.time.create(false);	
+				batTimer.loop(2000, function() {
+
+					bat = game.add.sprite(-20, game.rnd.integerInRange(20, 300), "bat");
+					game.physics.arcade.enable(bat);
+					bat.body.velocity.x = game.rnd.integerInRange(50, 150);
+					bat.checkWorldBounds = true;
+					bat.outOfBoundsKill = true;	
+
+					batGroup.add(bat);
+
+
+				}, this);
+				batTimer.start();
+
+				createrock();
+
+				back = game.add.sprite(160, 360, "back");
+				back.anchor.setTo(0.5);
+			}, 
+
+			update: function() {
+
+				game.physics.arcade.overlap(rockGroup, batGroup, function(rock, bat) {
+
+					batGroup.remove(bat);
+					rock.body.velocity.y = 0;
+				});
+
+				if (dragrock) {
+
+					rock.x = game.input.x;
+					rock.y = game.input.y;
+
+					graphics.clear();
+					graphics.lineStyle(3, 0x784421);
+					graphics.moveTo(140, 340);
+					graphics.lineTo(rock.x - 20, rock.y + 10);
+					graphics.moveTo(180, 340);
+					graphics.lineTo(rock.x + 20, rock.y + 10);
+
+					back.x = rock.x;
+					back.y = rock.y + 10;
+				}
+			}
+		}
+
+		function createrock() {
+
+			rock = game.add.sprite(160, 350, "rock");
+			game.physics.arcade.enable(rock);
+			rock.anchor.setTo(0.5);
+			rock.checkWorldBounds = true;
+			rock.outOfBoundsKill = true;
+			rock.inputEnabled = true;
+			rock.events.onInputDown.add(function() {
+
+				dragrock = true;
+			}, this);
+			rock.events.onInputUp.add(function() {
+
+				var distance = Phaser.Math.distance(rock.x, rock.y, 160, 350);
+				var direction = new Phaser.Point(160 - rock.x, rock.y - 350).normalize().multiply(distance * 12, distance * 12);
+
+				dragrock = false;
+				rock.body.velocity.y = -direction.y;
+				rock.body.velocity.x = direction.x;
+				rock.body.gravity.y = 1000;
+
+				createrock();
+				graphics.clear();
+				back.x = 160;
+				back.y = 360;
+				back.bringToTop();
+
+			}, this);
+
+			rockGroup.add(rock);
+
+		}
+
+		game.state.add("play", playState);
+		game.state.start("play");
+	</script>
+</body>
+</html>
