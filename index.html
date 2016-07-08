@@ -23,10 +23,15 @@
 				game.load.image("bat", "assets/bat.png");
 				game.load.image("slingshot", "assets/slingshot.png");
 				game.load.image("back", "assets/back.png");
+				game.load.image("heart", "assets/heart.png");
 
 			}, 
 
 			create: function() {
+
+				game.scale.scaleMode = Phaser.ScaleManager.EXACT_FIT;
+
+
 
 				game.add.sprite(0, 0, "landscape");
 				slingshot = game.add.sprite(160, 370, "slingshot");
@@ -41,33 +46,30 @@
 				rockGroup = game.add.group();
 				batGroup = game.add.group();
 
-				batTimer = game.time.create(false);	
-				batTimer.loop(2000, function() {
-
-					bat = game.add.sprite(-20, game.rnd.integerInRange(20, 300), "bat");
-					game.physics.arcade.enable(bat);
-					bat.body.velocity.x = game.rnd.integerInRange(50, 150);
-					bat.checkWorldBounds = true;
-					bat.outOfBoundsKill = true;	
-
-					batGroup.add(bat);
-
-
-				}, this);
-				batTimer.start();
-
-				createrock();
+				nextBat = 0;
 
 				back = game.add.sprite(160, 360, "back");
 				back.anchor.setTo(0.5);
+
+				createrock();
+
+				
+
+				heart = game.add.tileSprite(15, 440, 78, 23, "heart");
+				lives = 3;
+
 			}, 
 
 			update: function() {
 
 				game.physics.arcade.overlap(rockGroup, batGroup, function(rock, bat) {
 
-					batGroup.remove(bat);
-					rock.body.velocity.y = 0;
+					if (!rock.falling) {
+
+						batGroup.remove(bat);
+						rock.body.velocity.y = 0;
+						rock.falling = true;
+					}
 				});
 
 				if (dragrock) {
@@ -85,6 +87,76 @@
 					back.x = rock.x;
 					back.y = rock.y + 10;
 				}
+
+				if (game.time.time > nextBat) {
+
+					if (game.rnd.integerInRange(0, 1) > 0) {
+
+						bat = game.add.sprite(0, game.rnd.integerInRange(20, 200), "bat");
+						bat.anchor.setTo(0.5);
+						game.physics.arcade.enable(bat);
+						bat.body.velocity.x = game.rnd.integerInRange(100, 200);
+						bat.body.velocity.y = game.rnd.integerInRange(10, 50);
+						bat.checkWorldBounds = true;
+						bat.outOfBoundsKill = true;	
+						bat.direction = "right";
+						bat.events.onOutOfBounds.add(function() {
+
+							lives--;
+						});
+
+						batGroup.add(bat);
+					}
+					else {
+
+						bat = game.add.sprite(320, game.rnd.integerInRange(20, 200), "bat");
+						game.physics.arcade.enable(bat);
+						bat.anchor.setTo(0.5);
+						bat.body.velocity.x = game.rnd.integerInRange(-100, -200);
+						bat.body.velocity.y = game.rnd.integerInRange(10, 50);
+						bat.checkWorldBounds = true;
+						bat.outOfBoundsKill = true;	
+						bat.direction = "left";
+						bat.events.onOutOfBounds.add(function() {
+
+							lives--;
+						});
+
+						batGroup.add(bat);
+					}
+
+					
+
+					nextBat = game.time.time + 1500;
+				}
+
+				rockGroup.forEach(function(rock) {
+
+					if (!rock.falling && !(rock.body.velocity.y > 0)) {
+
+						rock.scale.setTo(rock.y * 0.002 + 0.5);
+					}
+				});
+
+				batGroup.forEach(function(bat) {
+
+					if (bat.direction == "left") {
+						bat.scale.setTo(bat.y * 0.002 + 0.5);
+						bat.scale.x *= -1;
+					}
+					else {
+						bat.scale.setTo(bat.y * 0.002 + 0.5);
+					}
+
+					
+				});
+
+				heart.width = lives * 26;
+
+				if (lives <= 0) {
+
+					game.state.start("play");
+				}
 			}
 		}
 
@@ -93,6 +165,7 @@
 			rock = game.add.sprite(160, 350, "rock");
 			game.physics.arcade.enable(rock);
 			rock.anchor.setTo(0.5);
+			rock.falling = false;
 			rock.checkWorldBounds = true;
 			rock.outOfBoundsKill = true;
 			rock.inputEnabled = true;
@@ -103,22 +176,23 @@
 			rock.events.onInputUp.add(function() {
 
 				var distance = Phaser.Math.distance(rock.x, rock.y, 160, 350);
-				var direction = new Phaser.Point(160 - rock.x, rock.y - 350).normalize().multiply(distance * 12, distance * 12);
+				var direction = new Phaser.Point(160 - rock.x, rock.y - 350).normalize().multiply(distance * 15, distance * 15);
 
 				dragrock = false;
 				rock.body.velocity.y = -direction.y;
 				rock.body.velocity.x = direction.x;
 				rock.body.gravity.y = 1000;
-
+				
 				createrock();
 				graphics.clear();
 				back.x = 160;
 				back.y = 360;
-				back.bringToTop();
 
 			}, this);
 
 			rockGroup.add(rock);
+
+			back.bringToTop();
 
 		}
 
