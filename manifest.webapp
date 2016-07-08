@@ -1,0 +1,16 @@
+{
+  "name": "Bad Bats",
+  "description": "Bats are here, repels using the slingshot, careful they are many!",
+  "launch_path": "/badbats",
+  "icons": {
+    "16": "/badbats/assets/icon-16.png",
+    "32": "/badbats/assets/icon-32.png",
+    "60": "/badbats/assets/icon-60.png",
+    "128": "/badbats/assets/icon-128.png"
+  },
+  "developer": {
+    "name": "MalvaGames",
+    "url": "http://malvagames.co.nz"
+  },
+  "default_locale": "en"
+}
